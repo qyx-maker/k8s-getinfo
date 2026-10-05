@@ -1,12 +1,12 @@
-from kubernetes.aio.client.api_client import ApiClient
-from kubernetes.aio.client.exceptions import ApiException
-from app.core.kubernetes import core_api
+from core.kubernetes import get_core_api
 
-async def list_nodes(namespace:str):
+async def list_nodes() -> list[dict]:
+    async with get_core_api() as api:
+        result = await api.list_node()
 
-    async with ApiClient() as api:
-        print(f"集群node情况:")
-        ret = await core_api.list_node(namespace=namespace)
-        for i in ret.items:
-            name = i.metadata.name
-            print(f"{name}")
+    nodes = []
+    for node in result.items:
+        conditions = node.status.conditions or []
+        ready = next((c.status for c in conditions if c.type == "Ready"), "Unknown")
+        nodes.append({"name": node.metadata.name, "ready_status": ready})
+    return nodes

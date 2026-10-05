@@ -1,13 +1,10 @@
 from fastapi import APIRouter
 
-from app.services.deploy_service import (
-    list_deployments
-)
+from services.deploy_service.list_deployments import list_deployments
 
 router = APIRouter()
 
 
-@router.get("/{namespace}")
-def get_deployments(namespace: str):
-
-    return list_deployments(namespace)
+@router.get("/api/deployments/{namespace}")
+async def get_deployments(namespace: str):
+    return await list_deployments(namespace)

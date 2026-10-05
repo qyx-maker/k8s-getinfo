@@ -1,16 +1,18 @@
-from kubernetes.aio.client.api_client import ApiClient
-from kubernetes.aio.client.exceptions import ApiException
-from app.core.kubernetes import core_api
+from core.kubernetes import get_core_api
 
-async def list_pods(namespace:str):
+async def list_pods(namespace: str) -> list[dict]:
+    async with get_core_api() as api:
+        result = await api.list_namespaced_pod(namespace=namespace)
 
-    async with ApiClient() as api:
-        print(f"命名空间{namespace}下的全部pod:")
-        try:
-            ret = await core_api.list_namespaced_pod(namespace=namespace)
-        except ApiException as e:
-            print(f"查询失败: {e.status} {e.reason}")
-            return
-        for i in ret.items:
-            name = i.metadata.name
-            print(f"{name}")
+    pods = []
+    for pod in result.items:
+        containers = pod.status.container_statuses or []
+        pods.append({
+            "name": pod.metadata.name,
+            "namespace": pod.metadata.namespace,
+            "phase": pod.status.phase,
+            "ready": bool(containers) and all(c.ready for c in containers),
+            "restarts": sum(c.restart_count for c in containers),
+            "node": pod.spec.node_name,
+        })
+    return pods

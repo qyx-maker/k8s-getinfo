@@ -1,12 +1,11 @@
 from fastapi import APIRouter
 
-from app.services.pod_service import list_pods
+from services.pod_service.list_pods import list_pods
 
 
 router = APIRouter()
 
 
-@router.get("/{namespace}")
-def get_pods(namespace: str):
-
-    return list_pods(namespace)
+@router.get("/api/pods/{namespace}")
+async def get_pods(namespace: str):
+    return await list_pods(namespace)

@@ -1,13 +1,10 @@
 from fastapi import APIRouter
 
-from app.services.deploy_service import (
-    list_nodes
-)
+from services.node_service.list_nodes import list_nodes
 
 router = APIRouter()
 
 
-@router.get("/")
-def get_nodes(namespace: str):
-
-    return list_nodes(namespace)
+@router.get("/api/nodes")
+async def get_nodes():
+    return await list_nodes()

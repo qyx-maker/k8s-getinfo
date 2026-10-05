@@ -1,16 +1,16 @@
-from kubernetes.aio.client.api_client import ApiClient
-from kubernetes.aio.client.exceptions import ApiException
-from app.core.kubernetes import core_api,apps_api
+from core.kubernetes import get_apps_api
 
-async def list_deployments(namespace:str):
+async def list_deployments(namespace: str) -> list[dict]:
+    async with get_apps_api() as api:
+        result = await api.list_namespaced_deployment(namespace=namespace)
 
-    async with ApiClient() as api:
-        print(f"命名空间{namespace}下的全部deployment:")
-        try:
-            ret = await apps_api.list_namespaced_deployment(namespace=namespace)
-        except ApiException as e:
-            print(f"查询失败: {e.status} {e.reason}")
-            return
-        for i in ret.items:
-            name = i.metadata.name
-            print(f"{name}")
+    return [
+        {
+            "name": deployment.metadata.name,
+            "namespace": deployment.metadata.namespace,
+            "desired_replicas": deployment.spec.replicas,
+            "ready_replicas": deployment.status.ready_replicas or 0,
+            "available_replicas": deployment.status.available_replicas or 0,
+        }
+        for deployment in result.items
+    ]
